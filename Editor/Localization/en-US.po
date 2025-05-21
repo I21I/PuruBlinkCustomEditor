@@ -1,0 +1,189 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en-US\n"
+
+msgid "ニュートラル"
+msgstr "Neutral"
+
+msgid "グー"
+msgstr "Fist"
+
+msgid "パー"
+msgstr "Open Hand"
+
+msgid "指差し"
+msgstr "Point"
+
+msgid "ピース"
+msgstr "Victory"
+
+msgid "ロック"
+msgstr "Rock n' Roll"
+
+msgid "銃"
+msgstr "Gun"
+
+msgid "グッド"
+msgstr "Thumbs Up"
+
+msgid "更新"
+msgstr "Refresh"
+
+msgid "VRC Parameter Driver 設定"
+msgstr "VRC Parameter Driver Settings"
+
+msgid "複数選択を許可"
+msgstr "Allow Multiple Selection"
+
+msgid "拡張機能"
+msgstr "Advanced"
+
+msgid "すべて"
+msgstr "All"
+
+msgid "なし"
+msgstr "None"
+
+msgid "値が見つかりません"
+msgstr "Values not found"
+
+msgid "左手ジェスチャー (GestureLeft)"
+msgstr "Left Hand Gesture (GestureLeft)"
+
+msgid "右手ジェスチャー (GestureRight)"
+msgstr "Right Hand Gesture (GestureRight)"
+
+msgid "パラメータが見つかりませんでした。"
+msgstr "Parameters not found."
+
+msgid "パラメータを追加"
+msgstr "Add Parameter"
+
+msgid "削除"
+msgstr "Del"
+
+msgid "Animation 置換"
+msgstr "Animation Replacement"
+
+msgid "出力設定"
+msgstr "Output Settings"
+
+msgid "出力フォルダ:"
+msgstr "Output Folder:"
+
+msgid "ファイル接頭語:"
+msgstr "File Prefix:"
+
+msgid "AnimatorControllerを複製して置換:"
+msgstr "Copy and Replace AnimatorController:"
+
+msgid "Prefab内を置換:"
+msgstr "Replace Prefab Contents:"
+
+msgid "Variantとして作成"
+msgstr "Replace with Prefab Variant"
+
+msgid "プロジェクトから検索"
+msgstr "Search from Project"
+
+msgid "クリア"
+msgstr "Clear"
+
+msgid "アニメーション一覧"
+msgstr "Animation List"
+
+msgid "アニメーションを検索"
+msgstr "Search Animations"
+
+msgid "アニメーションを置換"
+msgstr "Replace Animations"
+
+msgid "Export[日付]"
+msgstr "Export[Date]"
+
+msgid "AnimatorControllerをここにドラッグ＆ドロップ"
+msgstr "Drag & Drop AnimatorController Here"
+
+msgid "アニメーターコントローラを選択してください。"
+msgstr "Please select an Animator Controller."
+
+msgid "エラー"
+msgstr "Error"
+
+msgid "検索する前にアニメーターコントローラを設定してください。"
+msgstr "Please set AnimatorController before searching."
+
+msgid "Prefabが見つかりました"
+msgstr "Prefabs Found"
+
+msgid "指定されたAnimatorControllerを持つPrefabが見つかりませんでした。"
+msgstr "No Prefabs found with the specified AnimatorController."
+
+msgid "新しいPrefabは見つかりませんでした。（既存のPrefabと重複していました）"
+msgstr "No new Prefabs found. (Duplicates with existing Prefabs)"
+
+msgid "{0}個のアニメーションクリップを見つけました。"
+msgstr "Found {0} animation clips."
+
+msgid "処理されたコントローラ:"
+msgstr "Processed Controllers:"
+
+msgid "{0}個のPrefabを複製・更新しました:"
+msgstr "Copied and updated {0} Prefabs:"
+
+msgid "パラメータ '{0}' ({1}) を '{2}' に追加しました"
+msgstr "Added parameter '{0}' ({1}) to '{2}'"
+
+msgid "[BlinkCustomEditor] {0} {1}({2})のパラメータ '{3}' を削除しました"
+msgstr "[BlinkCustomEditor] Removed parameter '{3}' from {0} {1}({2})"
+
+msgid "[BlinkCustomEditor] {0} {1}({2})のパラメータ '{3}' を {4} に更新しました"
+msgstr "[BlinkCustomEditor] Updated parameter '{3}' in {0} {1}({2}) to {4}"
+
+msgid "{0} {1}に対応するステートが見つかりませんでした。"
+msgstr "State for {0} {1} not found."
+
+msgid "ステート {0} が見つかりませんでした。"
+msgstr "State {0} not found."
+
+msgid "VRCAvatarParameterDriverとModularAvatarのParameterSyncStepが見つかりませんでした。VRChat SDKまたはModularAvatarがインポートされているか確認してください。"
+msgstr "VRCAvatarParameterDriver and ModularAvatar ParameterSyncStep not found. Please check if VRChat SDK or ModularAvatar is imported."
+
+msgid "パラメータドライバーの追加中にエラーが発生しました: {0}"
+msgstr "Error occurred while adding parameter driver: {0}"
+
+msgid "parametersプロパティが見つかりませんでした。"
+msgstr "Parameters property not found."
+
+msgid "コントローラの複製に失敗しました: {0}"
+msgstr "Failed to copy controller: {0}"
+
+msgid "コントローラの複製中にエラーが発生しました: {0}"
+msgstr "Error occurred while copying controller: {0}"
+
+msgid "Prefab '{0}' の置換中にエラーが発生しました: {1}"
+msgstr "Error occurred while replacing Prefab '{0}': {1}"
+
+msgid "フォルダの作成中にエラーが発生しました: {0}"
+msgstr "Error occurred while creating folders: {0}"
+
+msgid "検索完了"
+msgstr "Search Complete"
+
+msgid "アニメーションクリップが見つかりませんでした。"
+msgstr "No animation clips found."
+
+msgid "置換完了"
+msgstr "Replacement Complete"
+
+msgid "{0}個のアニメーションを置き換えました。"
+msgstr "Replaced {0} animations."
+
+msgid "置き換えるアニメーションが見つかりませんでした。"
+msgstr "No animations to replace were found."
+
+msgid "PuruBlink Custom Editor"
+msgstr "PuruBlink Custom Editor"
