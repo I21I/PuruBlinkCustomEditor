@@ -13,6 +13,8 @@ namespace VRCFaceController
         private List<AnimatorController> targetControllers = new List<AnimatorController>();
         private int selectedControllerIndex = 0;
         private AnimatorController currentController => targetControllers.Count > selectedControllerIndex && selectedControllerIndex >= 0 ? targetControllers[selectedControllerIndex] : null;
+
+        private static bool registeredPlayModeCallback = false;
         
         private Vector2 scrollPosition;
         private Vector2 gestureScrollPosition;
@@ -34,10 +36,21 @@ namespace VRCFaceController
         private string[] layerNames = new string[0];
         private int selectedLayerIndex = -1;
 
-        private static readonly string[] GestureNames = new string[] {
-            "ニュートラル", "グー", "パー", "指差し",
-            "ピース", "ロック", "銃", "グッド"
-        };
+private string GestureNames(int index)
+{
+    switch (index)
+    {
+        case 0: return PuruBlinkCustomEditorLocalization.L("GestureNeutral");
+        case 1: return PuruBlinkCustomEditorLocalization.L("GestureFist");
+        case 2: return PuruBlinkCustomEditorLocalization.L("GestureHandOpen");
+        case 3: return PuruBlinkCustomEditorLocalization.L("GestureFingerPoint");
+        case 4: return PuruBlinkCustomEditorLocalization.L("GestureVictory");
+        case 5: return PuruBlinkCustomEditorLocalization.L("GestureRockNRoll");
+        case 6: return PuruBlinkCustomEditorLocalization.L("GestureHandGun");
+        case 7: return PuruBlinkCustomEditorLocalization.L("GestureThumbsUp");
+        default: return $"Gesture {index}";
+    }
+}
 
         private Dictionary<string, List<ParameterDriverState>> gestureParameterMap = new Dictionary<string, List<ParameterDriverState>>();
         private List<AnimationClip> controllerClips = new List<AnimationClip>();
@@ -75,17 +88,35 @@ namespace VRCFaceController
             GetWindow<PuruBlinkCustomEditor>("PuruBlink Custom Editor");
         }
 
-        private void OnEnable()
-        {
-            InitializeStyles();
-            PuruBlinkCustomEditorLocalization.Initialize();
+private void OnEnable()
+{
+    // PlayMode中かどうかにかかわらず、遅延して初期化を行う
+    EditorApplication.delayCall += () => {
+        try {
+            if (!this) return; // ウィンドウが既に破棄されていた場合
             
-            gestureParameterMap["GestureLeft"] = new List<ParameterDriverState>();
-            gestureParameterMap["GestureRight"] = new List<ParameterDriverState>();
+            if (!Application.isPlaying) {
+                // EditorGUIUtilityを使用して初期化が完了しているか確認
+                if (EditorGUIUtility.whiteTexture != null) {
+                    InitializeStyles();
+                    PuruBlinkCustomEditorLocalization.Initialize();
+                    
+                    gestureParameterMap["GestureLeft"] = new List<ParameterDriverState>();
+                    gestureParameterMap["GestureRight"] = new List<ParameterDriverState>();
+                }
+            }
         }
+        catch (System.Exception) { 
+            // 初期化に失敗しても例外は抑制
+        }
+    };
+}
 
         private void InitializeStyles()
         {
+if (Application.isPlaying || EditorStyles.boldLabel == null)
+        return;
+
             headerStyle = new GUIStyle(EditorStyles.boldLabel);
             headerStyle.alignment = TextAnchor.MiddleCenter;
             headerStyle.fontSize = 12;
@@ -134,10 +165,12 @@ namespace VRCFaceController
 
         private void OnGUI()
         {
-            if (headerStyle == null)
-            {
-                InitializeStyles();
-            }
+if (headerStyle == null)
+    {
+        InitializeStyles();
+        // nullチェックを追加して早期リターンを行う
+        if (headerStyle == null) return;
+    }
 
             EditorGUILayout.BeginVertical();
             
@@ -356,7 +389,7 @@ namespace VRCFaceController
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                     
                     EditorGUILayout.BeginHorizontal();
-                    GUILayout.Label($"{gestureValue}: {GestureNames[gestureValue]}", EditorStyles.boldLabel, GUILayout.Width(80));
+                    GUILayout.Label($"{gestureValue}: {GestureNames(gestureValue)}", EditorStyles.boldLabel, GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 100 : 80));
                     
                     string stateName = stateGroup.Key.Split('/').Last();
                     GUILayout.Label(stateName, EditorStyles.label);
@@ -889,12 +922,12 @@ namespace VRCFaceController
                             EditorGUILayout.LabelField("→ コントローラなし", GUILayout.Width(180));
                         }
                         
-                        if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Remove"), GUILayout.Width(25)))
-                        {
-                            targetPrefabs.RemoveAt(i);
-                            GUIUtility.ExitGUI();
-                            break;
-                        }
+if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Remove"), GUILayout.Width(25)))
+{
+    targetPrefabs.RemoveAt(i);
+    GUIUtility.ExitGUI();
+    break;
+}
                         
                         EditorGUILayout.EndHorizontal();
                     }
@@ -977,9 +1010,18 @@ namespace VRCFaceController
                 }
             }
         }
+
+        public static bool CheckPlayModeOperation()
+{
+    // エラーメッセージを出さない
+    return !Application.isPlaying;
+}
         
         private void SearchPrefabsWithControllers()
         {
+            if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
+        return;
+
             if (targetControllers.Count == 0)
             {
                 EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("NoControllersBeforeSearch"), PuruBlinkCustomEditorLocalization.L("OK"));
@@ -1017,18 +1059,27 @@ namespace VRCFaceController
                     }
                 }
                 
-                if (addedCount > 0)
-                {
-                    EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("SearchComplete"), PuruBlinkCustomEditorLocalization.L("PrefabsFound", addedCount), PuruBlinkCustomEditorLocalization.L("OK"));
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("SearchComplete"), PuruBlinkCustomEditorLocalization.L("NoDuplicatePrefabs"), PuruBlinkCustomEditorLocalization.L("OK"));
-                }
+if (addedCount > 0)
+{
+    EditorUtility.DisplayDialog(
+        PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
+        PuruBlinkCustomEditorLocalization.L("PrefabsFound", addedCount), 
+        PuruBlinkCustomEditorLocalization.L("OK"));
+}
+else
+{
+    EditorUtility.DisplayDialog(
+        PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
+        PuruBlinkCustomEditorLocalization.L("NoDuplicatePrefabs"), 
+        PuruBlinkCustomEditorLocalization.L("OK"));
+}
             }
             else
             {
-                EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("SearchComplete"), PuruBlinkCustomEditorLocalization.L("NoPrefabsFound"), PuruBlinkCustomEditorLocalization.L("OK"));
+                EditorUtility.DisplayDialog(
+    PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
+    PuruBlinkCustomEditorLocalization.L("NoPrefabsFound"), 
+    PuruBlinkCustomEditorLocalization.L("OK"));
             }
         }
         
@@ -1082,6 +1133,9 @@ namespace VRCFaceController
         
         private void FindAnimationsInController()
         {
+            if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
+        return;
+
             controllerClips.Clear();
             animationReplacementMap.Clear();
             controllerLayerAnimationMap.Clear();
@@ -1126,13 +1180,19 @@ namespace VRCFaceController
             controllerClips = controllerClips.Distinct().OrderBy(c => c.name).ToList();
             
             if (controllerClips.Count == 0)
-            {
-                EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("SearchComplete"), PuruBlinkCustomEditorLocalization.L("NoAnimationsFound"), PuruBlinkCustomEditorLocalization.L("OK"));
-            }
+{
+    EditorUtility.DisplayDialog(
+        PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
+        PuruBlinkCustomEditorLocalization.L("NoAnimationsFound"), 
+        PuruBlinkCustomEditorLocalization.L("OK"));
+}
             else
-            {
-                EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("SearchComplete"), PuruBlinkCustomEditorLocalization.L("AnimationsFound", controllerClips.Count), PuruBlinkCustomEditorLocalization.L("OK"));
-            }
+{
+    EditorUtility.DisplayDialog(
+        PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
+        PuruBlinkCustomEditorLocalization.L("AnimationsFound", controllerClips.Count), 
+        PuruBlinkCustomEditorLocalization.L("OK"));
+}
         }
         
         private void DrawAnimationReplaceRow(AnimationClip controllerClip)
@@ -1252,6 +1312,9 @@ namespace VRCFaceController
         
         private void ReplaceAnimations()
         {
+            if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
+        return;
+
              if (targetControllers.Count == 0 || animationReplacementMap.Count == 0)
             {
                 Debug.LogWarning("アニメーション置換: コントローラまたは置換対象のアニメーションが選択されていません。");
@@ -1601,6 +1664,9 @@ namespace VRCFaceController
 
         private void AnalyzeController()
         {
+                if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
+        return;
+
             if (currentController == null)
                 return;
 
@@ -2054,6 +2120,37 @@ namespace VRCFaceController
                 }
             }
         }
+        // クラス内の一番最後、閉じ括弧の直前に追加
+[InitializeOnLoadMethod]
+private static void RegisterPlayModeStateChanged()
+{
+    if (registeredPlayModeCallback)
+        return;
+        
+    registeredPlayModeCallback = true;
+    EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+}
+
+private static void OnPlayModeStateChanged(PlayModeStateChange state)
+{
+    if (state == PlayModeStateChange.EnteredEditMode)
+    {
+        // エディットモードに戻った時だけ処理
+        EditorApplication.delayCall += () => {
+            var windows = Resources.FindObjectsOfTypeAll<PuruBlinkCustomEditor>();
+            foreach (var window in windows)
+            {
+                try {
+                    window.Repaint();
+                }
+                catch (System.Exception) {
+                    // 例外を抑制
+                }
+            }
+        };
+    }
+}
+
     }
 
     public class ParameterDriverState
