@@ -126,5 +126,11 @@ namespace VRCFaceController
                 }
             }
         }
+        // 最後のユーティリティメソッドの後に追加
+public static bool CheckPlayModeOperation()
+{
+    // エラーメッセージを出さずに静かに失敗
+    return !Application.isPlaying;
+}
     }
 }
