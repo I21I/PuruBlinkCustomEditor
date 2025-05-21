@@ -5,15 +5,13 @@ namespace VRCFaceController
 {
     public enum Language
     {
-        [UnityEditor.InspectorName("日本語")]
-        Japanese,
-        [UnityEditor.InspectorName("English")]
+        日本語,
         English
     }
 
     public static class PuruBlinkCustomEditorLocalization
     {
-        private static Language currentLanguage = Language.Japanese;
+        private static Language currentLanguage = Language.日本語;
         private static Dictionary<string, Dictionary<Language, string>> localizedStrings = new Dictionary<string, Dictionary<Language, string>>();
 
         public static Language CurrentLanguage 
@@ -100,7 +98,7 @@ namespace VRCFaceController
         {
             localizedStrings[key] = new Dictionary<Language, string>
             {
-                { Language.Japanese, japanese },
+                { Language.日本語, japanese },
                 { Language.English, english }
             };
         }
