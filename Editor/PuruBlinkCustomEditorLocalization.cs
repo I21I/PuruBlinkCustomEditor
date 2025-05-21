@@ -1,123 +1,360 @@
 using UnityEngine;
+using UnityEditor;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Globalization;
 
 namespace VRCFaceController
 {
-    public enum Language
-    {
-        日本語,
-        English
-    }
+
+        public enum Language
+        {
+            日本語,
+            English
+        }
 
     public static class PuruBlinkCustomEditorLocalization
     {
-        private static Language currentLanguage = Language.日本語;
-        private static Dictionary<string, Dictionary<Language, string>> localizedStrings = new Dictionary<string, Dictionary<Language, string>>();
-
+        // 設定ファイルの保存先
+        private static readonly string SETTINGS_PATH = "Library/PuruBlinkCustomEditor.lang";
+        
+        // 言語データ
+        private static readonly List<Dictionary<string, string>> languages = new List<Dictionary<string, string>>();
+        private static readonly List<string> languageCodes = new List<string>();
+        private static string[] languageNames;
+        private static int currentLanguageIndex = 0;
+        private static bool isInitialized = false;
+        
+        // プロパティで現在の言語を取得・設定
         public static Language CurrentLanguage 
         { 
-            get { return currentLanguage; } 
-            set { currentLanguage = value; }
+            get { return (Language)currentLanguageIndex; } 
+            set 
+            { 
+                currentLanguageIndex = (int)value;
+                SaveLanguageSetting();
+            }
         }
 
+        
+        [InitializeOnLoadMethod]
         public static void Initialize()
         {
-            if (localizedStrings.Count > 0)
+            if (isInitialized) return;
+            
+            // 言語ファイルのフォルダを取得
+            string languageFolder = GetLanguageFolder();
+            if (string.IsNullOrEmpty(languageFolder))
+            {
+                Debug.LogWarning("言語ファイルフォルダが見つかりませんでした。");
+                // エラーメッセージ用の空のデータ
+                SetupEmptyLanguage();
                 return;
-                
-            AddLocalization("WindowTitle", "PuruBlink Custom Editor", "PuruBlink Custom Editor");
+            }
             
-            AddLocalization("AnimatorController", "AnimatorController", "AnimatorController");
-            AddLocalization("Refresh", "更新", "Refresh");
-            AddLocalization("ParameterDriverSettings", "VRC Parameter Driver Settings", "VRC Parameter Driver Settings");
-            AddLocalization("AllowMultipleSelection", "複数選択を許可", "Allow Multiple Selection");
-            AddLocalization("AdvancedFeatures", "拡張機能", "Advanced");
-            AddLocalization("Layer", "Layer:", "Layer:");
-            AddLocalization("All", "すべて", "All");
-            AddLocalization("FilterParameter", "Filter Parameter:", "Filter Parameter:");
-            AddLocalization("None", "なし", "None");
-            AddLocalization("Value", "Value:", "Value:");
-            AddLocalization("ValuesNotFound", "値が見つかりません", "Values not found");
+            // 言語ファイルの読み込み
+            LoadLanguageFiles(languageFolder);
             
-            AddLocalization("LeftHandGesture", "左手ジェスチャー (GestureLeft)", "Left Hand Gesture (GestureLeft)");
-            AddLocalization("RightHandGesture", "右手ジェスチャー (GestureRight)", "Right Hand Gesture (GestureRight)");
-            AddLocalization("ParametersNotFound", "パラメータが見つかりませんでした。", "Parameters not found.");
-            AddLocalization("AddParameter", "パラメータを追加", "Add Parameter");
-            AddLocalization("Delete", "削除", "Del");
+            // 保存されていた言語設定の読み込み
+            LoadLanguageSetting();
             
-            AddLocalization("AnimationReplacement", "Animation 置換", "Animation Replacement");
-            AddLocalization("OutputSettings", "出力設定", "Output Settings");
-            AddLocalization("OutputFolder", "出力フォルダ:", "Output Folder:");
-            AddLocalization("FilePrefix", "ファイル接頭語:", "File Prefix:");
-            AddLocalization("CopyAndReplaceController", "AnimatorControllerを複製して置換:", "Copy and Replace AnimatorController:");
-            AddLocalization("ReplacePrefab", "Prefab内を置換:", "Replace Prefab Contents:");
-            AddLocalization("PrefabVariantReplace", "Variantとして作成", "Replace with Prefab Variant");
-            AddLocalization("SearchFromProject", "プロジェクトから検索", "Search from Project");
-            AddLocalization("Clear", "クリア", "Clear");
-            AddLocalization("AnimationList", "アニメーション一覧", "Animation List");
-            AddLocalization("SearchAnimations", "アニメーションを検索", "Search Animations");
-            AddLocalization("ReplaceAnimations", "アニメーションを置換", "Replace Animations");
-            
-            AddLocalization("ExportDateFolder", "Export[日付]", "Export[Date]");
-            
-            AddLocalization("DragDropController", "AnimatorControllerをここにドラッグ＆ドロップ", "Drag & Drop AnimatorController Here");
-            
-            AddLocalization("SelectController", "アニメーターコントローラを選択してください。", "Please select an Animator Controller.");
-            AddLocalization("Error", "エラー", "Error");
-            AddLocalization("NoControllersBeforeSearch", "検索する前にアニメーターコントローラを設定してください。", "Please set AnimatorController before searching.");
-            AddLocalization("SearchComplete", "検索完了", "Search Complete");
-            AddLocalization("PrefabsFound", "{0}個の該当するPrefabを発見し、追加しました。", "Found and added {0} matching Prefabs.");
-            AddLocalization("NoPrefabsFound", "指定されたAnimatorControllerを持つPrefabが見つかりませんでした。", "No Prefabs found with the specified AnimatorController.");
-            AddLocalization("NoDuplicatePrefabs", "新しいPrefabは見つかりませんでした。（既存のPrefabと重複していました）", "No new Prefabs found. (Duplicates with existing Prefabs)");
-            AddLocalization("NoAnimationsFound", "アニメーションクリップが見つかりませんでした。", "No animation clips found.");
-            AddLocalization("AnimationsFound", "{0}個のアニメーションクリップを見つけました。", "Found {0} animation clips.");
-            AddLocalization("ReplaceComplete", "置換完了", "Replacement Complete");
-            AddLocalization("AnimationsReplaced", "{0}個のアニメーションを置換しました。", "Replaced {0} animations.");
-            AddLocalization("ProcessedControllers", "処理されたコントローラ:", "Processed Controllers:");
-            AddLocalization("PrefabsCopied", "{0}個のPrefabを複製・更新しました:", "Copied and updated {0} Prefabs:");
-            AddLocalization("NoAnimationsToReplace", "置換するアニメーションが見つかりませんでした。", "No animations to replace were found.");
-            AddLocalization("OK", "OK", "OK");
-            
-            AddLocalization("Remove", "×", "×");
-            AddLocalization("ParameterAdded", "パラメータ '{0}' ({1}) を '{2}' に追加しました", "Added parameter '{0}' ({1}) to '{2}'");
-            AddLocalization("ParameterRemoved", "パラメータを削除しました", "Parameter removed");
-            AddLocalization("ParameterUpdated", "パラメータを更新しました", "Parameter updated");
-            AddLocalization("StateNotFound", "{0} {1}に対応するステートが見つかりませんでした。", "State for {0} {1} not found.");
-            AddLocalization("StatePathNotFound", "ステート {0} が見つかりませんでした。", "State {0} not found.");
-            AddLocalization("DriverNotFound", "VRCAvatarParameterDriverとModularAvatarのParameterSyncStepが見つかりませんでした。VRChat SDKまたはModularAvatarがインポートされているか確認してください。", "VRCAvatarParameterDriver and ModularAvatar ParameterSyncStep not found. Please check if VRChat SDK or ModularAvatar is imported.");
-            AddLocalization("ErrorAddingDriver", "パラメータドライバーの追加中にエラーが発生しました: {0}", "Error occurred while adding parameter driver: {0}");
-            AddLocalization("ParametersPropertyNotFound", "parametersプロパティが見つかりませんでした。", "Parameters property not found.");
-            AddLocalization("ControllerCopyFailed", "コントローラの複製に失敗しました: {0}", "Failed to copy controller: {0}");
-            AddLocalization("ControllerCopyError", "コントローラの複製中にエラーが発生しました: {0}", "Error occurred while copying controller: {0}");
-            AddLocalization("PrefabReplaceError", "Prefab '{0}' の置換中にエラーが発生しました: {1}", "Error occurred while replacing Prefab '{0}': {1}");
-            AddLocalization("CopyingController", "コントローラのコピー中", "Copying controller");
-            AddLocalization("FolderCreationError", "フォルダの作成中にエラーが発生しました: {0}", "Error occurred while creating folders: {0}");
+            isInitialized = true;
         }
         
-        private static void AddLocalization(string key, string japanese, string english)
+        private static void SetupEmptyLanguage()
         {
-            localizedStrings[key] = new Dictionary<Language, string>
-            {
-                { Language.日本語, japanese },
-                { Language.English, english }
-            };
+            // 最小限のエラー表示用データのみ
+            var emptyDict = new Dictionary<string, string>();
+            
+            languages.Clear();
+            languageCodes.Clear();
+            
+            languages.Add(emptyDict);
+            languageCodes.Add("empty");
+            
+            languageNames = new string[] { "Default" };
         }
         
-        public static string L(string key, params object[] args)
+        private static void LoadLanguageFiles(string folder)
+{
+    languages.Clear();
+    languageCodes.Clear();
+    
+    string[] files = Directory.GetFiles(folder, "*.json");
+    
+    // 日本語とEnglishのインデックスを確保
+    int jaIndex = -1;
+    int enIndex = -1;
+    List<string> sortedFiles = new List<string>();
+    
+    // 日本語と英語のファイルを特定
+    string jaFile = Path.Combine(folder, "ja-JP.json");
+    string enFile = Path.Combine(folder, "en-US.json");
+    
+    // 日本語ファイルが存在すれば先頭に追加
+    if (File.Exists(jaFile))
+    {
+        sortedFiles.Add(jaFile);
+        jaIndex = 0;
+    }
+    
+    // 英語ファイルが存在すれば次に追加
+    if (File.Exists(enFile))
+    {
+        sortedFiles.Add(enFile);
+        enIndex = (jaIndex == 0) ? 1 : 0;
+    }
+    
+    // その他のファイルを追加
+    foreach (string file in files)
+    {
+        if (file != jaFile && file != enFile)
         {
-            if (localizedStrings.TryGetValue(key, out Dictionary<Language, string> translations))
+            sortedFiles.Add(file);
+        }
+    }
+    
+    // この時点でsortedFilesはja-JP.json, en-US.json, その他のファイルの順
+    List<string> names = new List<string>();
+    
+    // 通常の言語ファイル読み込み処理...
+    foreach (string file in sortedFiles)
+    {
+        try
+        {
+            string code = Path.GetFileNameWithoutExtension(file);
+            string json = File.ReadAllText(file);
+            
+            var langData = PuruBlinkJsonUtility.DeserializeStringDictionary(json);
+            if (langData == null || langData.Count == 0) continue;
+            
+            languages.Add(langData);
+            languageCodes.Add(code);
+            
+            string langName = langData.TryGetValue("Language", out string name) ? name : code;
+            names.Add(langName);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"言語ファイルの読み込みに失敗しました: {file}\n{e.Message}");
+        }
+    }
+    
+    languageNames = names.ToArray();
+}
+        
+        private static string GetLanguageFolder()
+        {
+            string editorPath = GetEditorPath();
+            if (string.IsNullOrEmpty(editorPath)) return null;
+            
+            string localizationFolder = Path.Combine(editorPath, "Localization");
+            if (Directory.Exists(localizationFolder))
             {
-                if (translations.TryGetValue(currentLanguage, out string translation))
+                return localizationFolder;
+            }
+            
+            // 言語ファイルフォルダが存在しない場合は作成のみ
+            try
+            {
+                Directory.CreateDirectory(localizationFolder);
+                Debug.Log($"言語ファイル用フォルダを作成しました: {localizationFolder}");
+                return localizationFolder;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"言語ファイルフォルダの作成に失敗しました: {e.Message}");
+                return null;
+            }
+        }
+        
+        private static string GetEditorPath()
+        {
+            // このスクリプトが存在するパスを取得
+            string[] guids = AssetDatabase.FindAssets("t:Script PuruBlinkCustomEditorLocalization");
+            if (guids.Length == 0) return null;
+            
+            string scriptPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+            if (string.IsNullOrEmpty(scriptPath)) return null;
+            
+            return Path.GetDirectoryName(scriptPath);
+        }
+        
+        // 言語ファイルの再読み込み
+        [MenuItem("Tools/PuruBlink/Reload Language Files")]
+        public static void ReloadLanguages()
+        {
+            isInitialized = false;
+            Initialize();
+        }
+        
+        private static void SaveLanguageSetting()
+        {
+            try
+            {
+                // 言語コードを保存
+                string code = currentLanguageIndex < languageCodes.Count && currentLanguageIndex >= 0 
+                    ? languageCodes[currentLanguageIndex] 
+                    : "en-US";
+                    
+                File.WriteAllText(SETTINGS_PATH, code);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"言語設定の保存に失敗しました: {e.Message}");
+            }
+        }
+        
+        private static void LoadLanguageSetting()
+        {
+            try
+            {
+                if (File.Exists(SETTINGS_PATH))
                 {
-                    if (args != null && args.Length > 0)
+                    string code = File.ReadAllText(SETTINGS_PATH);
+                    int index = languageCodes.IndexOf(code);
+                    
+                    if (index >= 0)
                     {
-                        return string.Format(translation, args);
+                        currentLanguageIndex = index;
+                        return;
                     }
+                }
+                
+                // 設定ファイルがないか、言語コードが見つからない場合はシステム言語を検出
+                string systemCode = CultureInfo.CurrentCulture.Name;
+                int systemIndex = languageCodes.FindIndex(c => c.Equals(systemCode, StringComparison.OrdinalIgnoreCase));
+                
+                if (systemIndex >= 0)
+                {
+                    currentLanguageIndex = systemIndex;
+                    return;
+                }
+                
+                // 言語コードの前半部分だけで検索 (例: "ja-JP" → "ja")
+                string shortCode = systemCode.Split('-')[0];
+                int shortIndex = languageCodes.FindIndex(c => c.StartsWith(shortCode, StringComparison.OrdinalIgnoreCase));
+                
+                if (shortIndex >= 0)
+                {
+                    currentLanguageIndex = shortIndex;
+                    return;
+                }
+                
+                // 英語をデフォルトとして検索
+                int englishIndex = languageCodes.IndexOf("en-US");
+                if (englishIndex >= 0)
+                {
+                    currentLanguageIndex = englishIndex;
+                    return;
+                }
+                
+                // それでもなければ最初の言語
+                currentLanguageIndex = 0;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"言語設定の読み込みに失敗しました: {e.Message}");
+                currentLanguageIndex = 0;
+            }
+        }
+        
+        // 言語選択UI
+        public static bool SelectLanguageGUI()
+        {
+            if (!isInitialized)
+            {
+                Initialize();
+            }
+            
+            if (languageNames == null || languageNames.Length == 0)
+            {
+                if (GUILayout.Button("Reload Language"))
+                {
+                    ReloadLanguages();
+                }
+                return false;
+            }
+            
+            EditorGUI.BeginChangeCheck();
+            currentLanguageIndex = EditorGUILayout.Popup("Editor Language", currentLanguageIndex, languageNames);
+            if (EditorGUI.EndChangeCheck())
+            {
+                SaveLanguageSetting();
+                return true;
+            }
+            return false;
+        }
+        
+        // 矩形領域での言語選択UI
+        public static void SelectLanguageGUI(Rect position)
+        {
+            if (!isInitialized)
+            {
+                Initialize();
+            }
+            
+            if (languageNames == null || languageNames.Length == 0)
+            {
+                if (GUI.Button(position, "Reload Language"))
+                {
+                    ReloadLanguages();
+                }
+                return;
+            }
+            
+            EditorGUI.BeginChangeCheck();
+            currentLanguageIndex = EditorGUI.Popup(position, "Editor Language", currentLanguageIndex, languageNames);
+            if (EditorGUI.EndChangeCheck())
+            {
+                SaveLanguageSetting();
+            }
+        }
+        
+        // 翻訳取得（パラメータなし）
+        public static string L(string key)
+        {
+            if (!isInitialized)
+            {
+                Initialize();
+            }
+            
+            // 現在の言語から翻訳を取得
+            if (currentLanguageIndex >= 0 && currentLanguageIndex < languages.Count)
+            {
+                var lang = languages[currentLanguageIndex];
+                if (lang.TryGetValue(key, out string translation) && !string.IsNullOrEmpty(translation))
+                {
                     return translation;
                 }
             }
             
+            // 見つからない場合は英語をフォールバックとして検索
+            int englishIndex = languageCodes.IndexOf("en-US");
+            if (englishIndex >= 0 && englishIndex < languages.Count && englishIndex != currentLanguageIndex)
+            {
+                var engLang = languages[englishIndex];
+                if (engLang.TryGetValue(key, out string engTranslation) && !string.IsNullOrEmpty(engTranslation))
+                {
+                    return engTranslation;
+                }
+            }
+            
+            // 最後の手段としてキーそのものを返す
             return key;
+        }
+        
+        // 翻訳取得（フォーマットパラメータあり）
+        public static string L(string key, params object[] args)
+        {
+            string text = L(key);
+            if (args != null && args.Length > 0)
+            {
+                return string.Format(text, args);
+            }
+            return text;
         }
     }
 }
