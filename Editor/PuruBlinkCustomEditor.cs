@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace VRCFaceController
+namespace PuruBlinkCustom
 {
     public class PuruBlinkCustomEditor : EditorWindow
     {
@@ -36,21 +36,21 @@ namespace VRCFaceController
         private string[] layerNames = new string[0];
         private int selectedLayerIndex = -1;
 
-private string GestureNames(int index)
-{
-    switch (index)
-    {
-        case 0: return PuruBlinkCustomEditorLocalization.L("GestureNeutral");
-        case 1: return PuruBlinkCustomEditorLocalization.L("GestureFist");
-        case 2: return PuruBlinkCustomEditorLocalization.L("GestureHandOpen");
-        case 3: return PuruBlinkCustomEditorLocalization.L("GestureFingerPoint");
-        case 4: return PuruBlinkCustomEditorLocalization.L("GestureVictory");
-        case 5: return PuruBlinkCustomEditorLocalization.L("GestureRockNRoll");
-        case 6: return PuruBlinkCustomEditorLocalization.L("GestureHandGun");
-        case 7: return PuruBlinkCustomEditorLocalization.L("GestureThumbsUp");
-        default: return $"Gesture {index}";
-    }
-}
+        private string GestureNames(int index)
+        {
+            switch (index)
+            {
+                case 0: return Localization.L("ニュートラル");
+                case 1: return Localization.L("グー");
+                case 2: return Localization.L("パー");
+                case 3: return Localization.L("指差し");
+                case 4: return Localization.L("ピース");
+                case 5: return Localization.L("ロック");
+                case 6: return Localization.L("銃");
+                case 7: return Localization.L("グッド");
+                default: return $"Gesture {index}";
+            }
+        }
 
         private Dictionary<string, List<ParameterDriverState>> gestureParameterMap = new Dictionary<string, List<ParameterDriverState>>();
         private List<AnimationClip> controllerClips = new List<AnimationClip>();
@@ -88,34 +88,31 @@ private string GestureNames(int index)
             GetWindow<PuruBlinkCustomEditor>("PuruBlink Custom Editor");
         }
 
-private void OnEnable()
-{
-    // PlayMode中かどうかにかかわらず、遅延して初期化を行う
-    EditorApplication.delayCall += () => {
-        try {
-            if (!this) return; // ウィンドウが既に破棄されていた場合
-            
-            if (!Application.isPlaying) {
-                // EditorGUIUtilityを使用して初期化が完了しているか確認
-                if (EditorGUIUtility.whiteTexture != null) {
-                    InitializeStyles();
-                    PuruBlinkCustomEditorLocalization.Initialize();
+        private void OnEnable()
+        {
+            EditorApplication.delayCall += () => {
+                try {
+                    if (!this) return; 
                     
-                    gestureParameterMap["GestureLeft"] = new List<ParameterDriverState>();
-                    gestureParameterMap["GestureRight"] = new List<ParameterDriverState>();
+                    if (EditorGUIUtility.whiteTexture != null) {
+                        InitializeStyles();
+                        Localization.Initialize();
+                        
+                        if (!gestureParameterMap.ContainsKey("GestureLeft"))
+                            gestureParameterMap["GestureLeft"] = new List<ParameterDriverState>();
+                        if (!gestureParameterMap.ContainsKey("GestureRight"))
+                            gestureParameterMap["GestureRight"] = new List<ParameterDriverState>();
+                    }
                 }
-            }
+                catch (System.Exception) { 
+                }
+            };
         }
-        catch (System.Exception) { 
-            // 初期化に失敗しても例外は抑制
-        }
-    };
-}
 
         private void InitializeStyles()
         {
-if (Application.isPlaying || EditorStyles.boldLabel == null)
-        return;
+            if (EditorStyles.boldLabel == null)
+                return;
 
             headerStyle = new GUIStyle(EditorStyles.boldLabel);
             headerStyle.alignment = TextAnchor.MiddleCenter;
@@ -165,32 +162,33 @@ if (Application.isPlaying || EditorStyles.boldLabel == null)
 
         private void OnGUI()
         {
-if (headerStyle == null)
-    {
-        InitializeStyles();
-        // nullチェックを追加して早期リターンを行う
-        if (headerStyle == null) return;
-    }
+            if (headerStyle == null)
+            {
+                InitializeStyles();
+                if (EditorStyles.boldLabel == null) return;
+            }
 
             EditorGUILayout.BeginVertical();
             
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(PuruBlinkCustomEditorLocalization.L("WindowTitle"), EditorStyles.boldLabel);
+            GUILayout.Label(Localization.L("PuruBlink Custom Editor"), EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
             
-            EditorGUI.BeginChangeCheck();
-            PuruBlinkCustomEditorLocalization.CurrentLanguage = (Language)EditorGUILayout.EnumPopup(PuruBlinkCustomEditorLocalization.CurrentLanguage, GUILayout.Width(120));
-            if (EditorGUI.EndChangeCheck())
-            {
-                Repaint();
-            }
-            EditorGUILayout.EndHorizontal();
+EditorGUI.BeginChangeCheck();
+int newLang = EditorGUILayout.Popup("", (int)Localization.CurrentLanguage, 
+    System.Enum.GetNames(typeof(Localization.Language)), GUILayout.Width(120));
+if (EditorGUI.EndChangeCheck())
+{
+    Localization.CurrentLanguage = (Localization.Language)newLang;
+    Repaint();
+}
+EditorGUILayout.EndHorizontal();
             
             DrawThinSeparator();
 
             DrawControllerSelectionArea();
 
-            selectedTab = GUILayout.Toolbar(selectedTab, new string[] { PuruBlinkCustomEditorLocalization.L("ParameterDriverSettings"), PuruBlinkCustomEditorLocalization.L("AnimationReplacement") });
+            selectedTab = GUILayout.Toolbar(selectedTab, new string[] { Localization.L("VRC Parameter Driver 設定"), Localization.L("Animation 置換") });
             
             EditorGUILayout.Space();
             
@@ -224,23 +222,23 @@ if (headerStyle == null)
         {
             if (targetControllers.Count == 0 || currentController == null)
             {
-                EditorGUILayout.HelpBox(PuruBlinkCustomEditorLocalization.L("SelectController"), MessageType.Info);
+                EditorGUILayout.HelpBox(Localization.L("アニメーターコントローラを選択してください。"), MessageType.Info);
                 return;
             }
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("ParameterDriverSettings"), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(Localization.L("VRC Parameter Driver 設定"), EditorStyles.boldLabel);
             GUILayout.Space(20);
             
             allowMultipleSelection = EditorGUILayout.Toggle(allowMultipleSelection, GUILayout.Width(15));
-            EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("AllowMultipleSelection"), GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 160 : 120));
+            EditorGUILayout.LabelField(Localization.L("複数選択を許可"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 160 : 120));
             
             GUILayout.FlexibleSpace();
             
             EditorGUI.BeginChangeCheck();
-            showEditButtons = GUILayout.Toggle(showEditButtons, PuruBlinkCustomEditorLocalization.L("AdvancedFeatures"), "Button", GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 90 : 100));
+            showEditButtons = GUILayout.Toggle(showEditButtons, Localization.L("拡張機能"), "Button", GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 90 : 100));
             if (EditorGUI.EndChangeCheck())
             {
                 Repaint();
@@ -248,7 +246,7 @@ if (headerStyle == null)
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("AnimatorController") + ":", GUILayout.Width(130));
+            EditorGUILayout.LabelField("AnimatorController" + ":", GUILayout.Width(130));
             
             List<string> controllerNames = targetControllers.Select(c => c != null ? c.name : "None").ToList();
             
@@ -261,10 +259,10 @@ if (headerStyle == null)
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("Layer"), GUILayout.Width(70));
+            EditorGUILayout.LabelField("Layer:", GUILayout.Width(70));
             
             string[] layerOptions = new string[layerNames.Length + 1];
-            layerOptions[0] = PuruBlinkCustomEditorLocalization.L("All");
+            layerOptions[0] = Localization.L("すべて");
             for (int i = 0; i < layerNames.Length; i++)
             {
                 layerOptions[i + 1] = layerNames[i];
@@ -282,10 +280,10 @@ if (headerStyle == null)
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("FilterParameter"), GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 150 : 130));
+            EditorGUILayout.LabelField("Filter Parameter:", GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 150 : 130));
             
             List<string> paramOptions = new List<string>();
-            paramOptions.Add(PuruBlinkCustomEditorLocalization.L("None"));
+            paramOptions.Add(Localization.L("なし"));
             paramOptions.AddRange(availableParameters);
             
             int paramIndex = string.IsNullOrEmpty(selectedParameter) ? 0 : paramOptions.IndexOf(selectedParameter);
@@ -304,7 +302,7 @@ if (headerStyle == null)
             
             if (!string.IsNullOrEmpty(selectedParameter))
             {
-                EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("Value"), GUILayout.Width(50));
+                EditorGUILayout.LabelField("Value:", GUILayout.Width(50));
                 EditorGUI.BeginChangeCheck();
                 if (valueLabels.Count > 0)
                 {
@@ -316,7 +314,7 @@ if (headerStyle == null)
                 }
                 else
                 {
-                    EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("ValuesNotFound"), GUILayout.Width(150));
+                    EditorGUILayout.LabelField(Localization.L("値が見つかりません"), GUILayout.Width(150));
                 }
             }
             
@@ -331,12 +329,12 @@ if (headerStyle == null)
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
             
             EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(position.width / 2 - 12));
-            GUILayout.Label(PuruBlinkCustomEditorLocalization.L("LeftHandGesture"), headerStyle);
+            GUILayout.Label(Localization.L("左手ジェスチャー (GestureLeft)"), headerStyle);
             DrawGestureSection("GestureLeft");
             EditorGUILayout.EndVertical();
             
             EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(position.width / 2 - 12));
-            GUILayout.Label(PuruBlinkCustomEditorLocalization.L("RightHandGesture"), headerStyle);
+            GUILayout.Label(Localization.L("右手ジェスチャー (GestureRight)"), headerStyle);
             DrawGestureSection("GestureRight");
             EditorGUILayout.EndVertical();
             
@@ -349,7 +347,7 @@ if (headerStyle == null)
         {
             if (!gestureParameterMap.ContainsKey(gestureType) || gestureParameterMap[gestureType].Count == 0)
             {
-                EditorGUILayout.HelpBox(PuruBlinkCustomEditorLocalization.L("ParametersNotFound"), MessageType.Info);
+                EditorGUILayout.HelpBox(Localization.L("パラメータが見つかりませんでした。"), MessageType.Info);
                 return;
             }
             
@@ -389,14 +387,14 @@ if (headerStyle == null)
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                     
                     EditorGUILayout.BeginHorizontal();
-                    GUILayout.Label($"{gestureValue}: {GestureNames(gestureValue)}", EditorStyles.boldLabel, GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 100 : 80));
+                    GUILayout.Label($"{gestureValue}: {GestureNames(gestureValue)}", EditorStyles.boldLabel, GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 100 : 80));
                     
                     string stateName = stateGroup.Key.Split('/').Last();
                     GUILayout.Label(stateName, EditorStyles.label);
                     
                     EditorGUILayout.EndHorizontal();
                     
-                    if (showEditButtons && GUILayout.Button(PuruBlinkCustomEditorLocalization.L("AddParameter"), EditorStyles.miniButton))
+                    if (showEditButtons && GUILayout.Button(Localization.L("パラメータを追加"), EditorStyles.miniButton))
                     {
                         ShowAddParameterMenu(gestureType, gestureValue);
                     }
@@ -423,7 +421,7 @@ if (headerStyle == null)
             float currentX = rect.x;
             float totalWidth = rect.width;
             
-            float deleteButtonWidth = PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 35f : 40f;
+            float deleteButtonWidth = Localization.CurrentLanguage == Localization.Language.English ? 35f : 40f;
             float totalButtonArea = showEditButtons ? deleteButtonWidth : 0f;
             
             float paramNameWidth = totalWidth - 75f - totalButtonArea;
@@ -464,7 +462,7 @@ if (headerStyle == null)
             if (showEditButtons)
             {
                 Rect deleteRect = new Rect(currentX, rect.y, deleteButtonWidth, rect.height);
-                if (GUI.Button(deleteRect, PuruBlinkCustomEditorLocalization.L("Delete")))
+                if (GUI.Button(deleteRect, Localization.L("削除")))
                 {
                     RemoveParameterFromState(paramState);
                 }
@@ -520,14 +518,14 @@ if (headerStyle == null)
             
             if (string.IsNullOrEmpty(targetStatePath))
             {
-                EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("StateNotFound", gestureType, gestureValue), PuruBlinkCustomEditorLocalization.L("OK"));
+                EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("{0} {1}に対応するステートが見つかりませんでした。", gestureType, gestureValue), "OK");
                 return;
             }
             
             AnimatorState state = FindStateByPath(targetStatePath);
             if (state == null)
             {
-                EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("StatePathNotFound", targetStatePath), PuruBlinkCustomEditorLocalization.L("OK"));
+                EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("ステート {0} が見つかりませんでした。", targetStatePath), "OK");
                 return;
             }
             
@@ -760,7 +758,7 @@ if (headerStyle == null)
                             
                         if (driverType == null)
                         {
-                            EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("DriverNotFound"), PuruBlinkCustomEditorLocalization.L("OK"));
+                            EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("VRCAvatarParameterDriverとModularAvatarのParameterSyncStepが見つかりませんでした。VRChat SDKまたはModularAvatarがインポートされているか確認してください。"), "OK");
                             return;
                         }
                     }
@@ -774,7 +772,7 @@ if (headerStyle == null)
                 }
                 catch (Exception ex)
                 {
-                    EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("ErrorAddingDriver", ex.Message), PuruBlinkCustomEditorLocalization.L("OK"));
+                    EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("パラメータドライバーの追加中にエラーが発生しました: {0}", ex.Message), "OK");
                     return;
                 }
             }
@@ -792,7 +790,7 @@ if (headerStyle == null)
                 
                 if (parametersProp == null)
                 {
-                    EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("ParametersPropertyNotFound"), PuruBlinkCustomEditorLocalization.L("OK"));
+                    EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("parametersプロパティが見つかりませんでした。"), "OK");
                     return;
                 }
                 
@@ -846,36 +844,36 @@ if (headerStyle == null)
         {
             if (targetControllers.Count == 0)
             {
-                EditorGUILayout.HelpBox(PuruBlinkCustomEditorLocalization.L("SelectController"), MessageType.Info);
+                EditorGUILayout.HelpBox(Localization.L("アニメーターコントローラを選択してください。"), MessageType.Info);
                 return;
             }
             
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            outputSettingsFoldout = EditorGUILayout.Foldout(outputSettingsFoldout, PuruBlinkCustomEditorLocalization.L("OutputSettings"), true);
+            outputSettingsFoldout = EditorGUILayout.Foldout(outputSettingsFoldout, Localization.L("出力設定"), true);
             
             if (outputSettingsFoldout)
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("OutputFolder"), GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 120 : 100));
-                EditorGUILayout.LabelField(outputFolder + "/" + PuruBlinkCustomEditorLocalization.L("ExportDateFolder"));
+                EditorGUILayout.LabelField(Localization.L("出力フォルダ:"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 120 : 100));
+                EditorGUILayout.LabelField(outputFolder + "/" + Localization.L("Export[日付]"));
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("FilePrefix"), GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 120 : 100));
+                EditorGUILayout.LabelField(Localization.L("ファイル接頭語:"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 120 : 100));
                 outputPrefix = EditorGUILayout.TextField(outputPrefix);
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("CopyAndReplaceController"), GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 250 : 200));
+                EditorGUILayout.LabelField(Localization.L("AnimatorControllerを複製して置換:"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 250 : 200));
                 copyController = EditorGUILayout.Toggle(copyController);
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("ReplacePrefab"), GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 180 : 130));
+                EditorGUILayout.LabelField(Localization.L("Prefab内を置換:"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 180 : 130));
                 
                 Rect toggleRect = GUILayoutUtility.GetRect(15, 18, GUILayout.Width(15));
                 createPrefabVariant = EditorGUI.Toggle(toggleRect, createPrefabVariant);
-                EditorGUI.LabelField(new Rect(toggleRect.x + 18, toggleRect.y, 200, 18), PuruBlinkCustomEditorLocalization.L("PrefabVariantReplace"));
+                EditorGUI.LabelField(new Rect(toggleRect.x + 18, toggleRect.y, 200, 18), Localization.L("Variantとして作成"));
                 
                 GUILayout.FlexibleSpace();
                 EditorGUILayout.EndHorizontal();
@@ -884,12 +882,12 @@ if (headerStyle == null)
                 GameObject newPrefab = (GameObject)EditorGUILayout.ObjectField(
                     null, typeof(GameObject), false, GUILayout.ExpandWidth(true));
                 
-                if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("SearchFromProject"), GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 180 : 150)))
+                if (GUILayout.Button(Localization.L("プロジェクトから検索"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 180 : 150)))
                 {
                     SearchPrefabsWithControllers();
                 }
                 
-                if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Clear"), GUILayout.Width(60)))
+                if (GUILayout.Button(Localization.L("クリア"), GUILayout.Width(60)))
                 {
                     targetPrefabs.Clear();
                 }
@@ -922,12 +920,12 @@ if (headerStyle == null)
                             EditorGUILayout.LabelField("→ コントローラなし", GUILayout.Width(180));
                         }
                         
-if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Remove"), GUILayout.Width(25)))
-{
-    targetPrefabs.RemoveAt(i);
-    GUIUtility.ExitGUI();
-    break;
-}
+                        if (GUILayout.Button(Localization.L("×"), GUILayout.Width(25)))
+                        {
+                            targetPrefabs.RemoveAt(i);
+                            GUIUtility.ExitGUI();
+                            break;
+                        }
                         
                         EditorGUILayout.EndHorizontal();
                     }
@@ -942,7 +940,7 @@ if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Remove"), GUILayout.Wi
             
             if (controllerLayerAnimationMap.Count == 0)
             {
-                if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("SearchAnimations"), GUILayout.Height(30)))
+                if (GUILayout.Button(Localization.L("アニメーションを検索"), GUILayout.Height(30)))
                 {
                     FindAnimationsInController();
                 }
@@ -950,7 +948,7 @@ if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Remove"), GUILayout.Wi
                 return;
             }
             
-            EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("AnimationList"), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(Localization.L("アニメーション一覧"), EditorStyles.boldLabel);
             
             DrawThinSeparator();
             EditorGUILayout.Space(3);
@@ -1004,27 +1002,21 @@ if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Remove"), GUILayout.Wi
             
             if (animationReplacementMap.Count > 0)
             {
-                if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("ReplaceAnimations"), GUILayout.Height(30)))
+                if (GUILayout.Button(Localization.L("アニメーションを置換"), GUILayout.Height(30)))
                 {
                     ReplaceAnimations();
                 }
             }
         }
-
-        public static bool CheckPlayModeOperation()
-{
-    // エラーメッセージを出さない
-    return !Application.isPlaying;
-}
         
         private void SearchPrefabsWithControllers()
         {
             if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
-        return;
+                return;
 
             if (targetControllers.Count == 0)
             {
-                EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("NoControllersBeforeSearch"), PuruBlinkCustomEditorLocalization.L("OK"));
+                EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("検索する前にアニメーターコントローラを設定してください。"), "OK");
                 return;
             }
             
@@ -1059,27 +1051,27 @@ if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Remove"), GUILayout.Wi
                     }
                 }
                 
-if (addedCount > 0)
-{
-    EditorUtility.DisplayDialog(
-        PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
-        PuruBlinkCustomEditorLocalization.L("PrefabsFound", addedCount), 
-        PuruBlinkCustomEditorLocalization.L("OK"));
-}
-else
-{
-    EditorUtility.DisplayDialog(
-        PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
-        PuruBlinkCustomEditorLocalization.L("NoDuplicatePrefabs"), 
-        PuruBlinkCustomEditorLocalization.L("OK"));
-}
+                if (addedCount > 0)
+                {
+                    EditorUtility.DisplayDialog(
+                        Localization.L("検索完了"), 
+                        Localization.L("Prefabが見つかりました", addedCount), 
+                        "OK");
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog(
+                        Localization.L("検索完了"), 
+                        Localization.L("新しいPrefabは見つかりませんでした。（既存のPrefabと重複していました）"), 
+                        "OK");
+                }
             }
             else
             {
                 EditorUtility.DisplayDialog(
-    PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
-    PuruBlinkCustomEditorLocalization.L("NoPrefabsFound"), 
-    PuruBlinkCustomEditorLocalization.L("OK"));
+                    Localization.L("検索完了"), 
+                    Localization.L("指定されたAnimatorControllerを持つPrefabが見つかりませんでした。"), 
+                    "OK");
             }
         }
         
@@ -1134,7 +1126,7 @@ else
         private void FindAnimationsInController()
         {
             if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
-        return;
+                return;
 
             controllerClips.Clear();
             animationReplacementMap.Clear();
@@ -1180,19 +1172,19 @@ else
             controllerClips = controllerClips.Distinct().OrderBy(c => c.name).ToList();
             
             if (controllerClips.Count == 0)
-{
-    EditorUtility.DisplayDialog(
-        PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
-        PuruBlinkCustomEditorLocalization.L("NoAnimationsFound"), 
-        PuruBlinkCustomEditorLocalization.L("OK"));
-}
+            {
+                EditorUtility.DisplayDialog(
+                    Localization.L("検索完了"), 
+                    Localization.L("アニメーションクリップが見つかりませんでした。"), 
+                    "OK");
+            }
             else
-{
-    EditorUtility.DisplayDialog(
-        PuruBlinkCustomEditorLocalization.L("SearchComplete"), 
-        PuruBlinkCustomEditorLocalization.L("AnimationsFound", controllerClips.Count), 
-        PuruBlinkCustomEditorLocalization.L("OK"));
-}
+            {
+                EditorUtility.DisplayDialog(
+                    Localization.L("検索完了"), 
+                    Localization.L("{0}個のアニメーションクリップを見つけました。", controllerClips.Count), 
+                    "OK");
+            }
         }
         
         private void DrawAnimationReplaceRow(AnimationClip controllerClip)
@@ -1284,7 +1276,7 @@ else
                 GUILayout.Space(40);
             }
             
-            if (animationReplacementMap.ContainsKey(controllerClip) && GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Clear"), GUILayout.Width(60)))
+            if (animationReplacementMap.ContainsKey(controllerClip) && GUILayout.Button(Localization.L("クリア"), GUILayout.Width(60)))
             {
                 List<AnimationClip> clipsToRemove = new List<AnimationClip>();
                 foreach (var controllerPair in controllerLayerAnimationMap)
@@ -1313,7 +1305,7 @@ else
         private void ReplaceAnimations()
         {
             if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
-        return;
+                return;
 
              if (targetControllers.Count == 0 || animationReplacementMap.Count == 0)
             {
@@ -1351,7 +1343,7 @@ else
                         controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(destinationPath);
                         if (controller == null)
                         {
-                            EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("ControllerCopyFailed", destinationPath), PuruBlinkCustomEditorLocalization.L("OK"));
+                            EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("コントローラの複製に失敗しました: {0}", destinationPath), "OK");
                             continue;
                         }
                         
@@ -1359,7 +1351,7 @@ else
                     }
                     catch (Exception ex)
                     {
-                        EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("ControllerCopyError", ex.Message), PuruBlinkCustomEditorLocalization.L("OK"));
+                        EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("コントローラの複製中にエラーが発生しました: {0}", ex.Message), "OK");
                         continue;
                     }
                 }
@@ -1467,7 +1459,7 @@ else
                         }
                         catch (Exception ex)
                         {
-                            EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), PuruBlinkCustomEditorLocalization.L("PrefabReplaceError", prefab.name, ex.Message), PuruBlinkCustomEditorLocalization.L("OK"));
+                            EditorUtility.DisplayDialog(Localization.L("エラー"), Localization.L("Prefab '{0}' の置換中にエラーが発生しました: {1}", prefab.name, ex.Message), "OK");
                         }
                     }
                 }
@@ -1478,21 +1470,21 @@ else
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
                 
-                string message = PuruBlinkCustomEditorLocalization.L("AnimationsReplaced", totalReplacedCount);
+                string message = Localization.L("{0}個のアニメーションを置き換えました。", totalReplacedCount);
                 if (processedControllers.Count > 0)
                 {
-                    message += $"\n\n{PuruBlinkCustomEditorLocalization.L("ProcessedControllers")}\n{string.Join("\n", processedControllers)}";
+                    message += $"\n\n{Localization.L("処理されたコントローラ:")}\n{string.Join("\n", processedControllers)}";
                 }
                 if (processedPrefabCount > 0)
                 {
-                    message += $"\n\n{PuruBlinkCustomEditorLocalization.L("PrefabsCopied", processedPrefabCount)}\n{string.Join("\n", processedPrefabs)}";
+                    message += $"\n\n{Localization.L("{0}個のPrefabを複製・更新しました:", processedPrefabCount)}\n{string.Join("\n", processedPrefabs)}";
                 }
                 
-                EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("ReplaceComplete"), message, PuruBlinkCustomEditorLocalization.L("OK"));
+                EditorUtility.DisplayDialog(Localization.L("置換完了"), message, "OK");
             }
             else
             {
-                EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("ReplaceComplete"), PuruBlinkCustomEditorLocalization.L("NoAnimationsToReplace"), PuruBlinkCustomEditorLocalization.L("OK"));
+                EditorUtility.DisplayDialog(Localization.L("置換完了"), Localization.L("置き換えるアニメーションが見つかりませんでした。"), "OK");
             }
         }
         
@@ -1562,12 +1554,12 @@ else
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(PuruBlinkCustomEditorLocalization.L("AnimatorController"), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("AnimatorController", EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
             
             if (targetControllers.Count > 0 && targetControllers.Any(c => c != null))
             {
-                if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Refresh"), GUILayout.Width(60)))
+                if (GUILayout.Button(Localization.L("更新"), GUILayout.Width(60)))
                 {
                     AnalyzeController();
                 }
@@ -1594,7 +1586,7 @@ else
                         AnalyzeController();
                     }
                     
-                    if (GUILayout.Button(PuruBlinkCustomEditorLocalization.L("Delete"), GUILayout.Width(PuruBlinkCustomEditorLocalization.CurrentLanguage == Language.English ? 60 : 60)))
+                    if (GUILayout.Button(Localization.L("削除"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 60 : 60)))
                     {
                         targetControllers.RemoveAt(i);
                         if (selectedControllerIndex >= targetControllers.Count)
@@ -1614,7 +1606,7 @@ else
             dropArea.x += 5;
             dropArea.width -= 10;
             GUI.Box(dropArea, "", dropAreaStyle);
-            EditorGUI.LabelField(dropArea, PuruBlinkCustomEditorLocalization.L("DragDropController"), dropAreaTextStyle);
+            EditorGUI.LabelField(dropArea, Localization.L("AnimatorControllerをここにドラッグ＆ドロップ"), dropAreaTextStyle);
             HandleDragAndDrop(dropArea);
             
             EditorGUILayout.EndVertical();
@@ -1664,8 +1656,8 @@ else
 
         private void AnalyzeController()
         {
-                if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
-        return;
+            if (!PuruBlinkCustomEditorUtils.CheckPlayModeOperation())
+                return;
 
             if (currentController == null)
                 return;
@@ -2120,37 +2112,34 @@ else
                 }
             }
         }
-        // クラス内の一番最後、閉じ括弧の直前に追加
-[InitializeOnLoadMethod]
-private static void RegisterPlayModeStateChanged()
-{
-    if (registeredPlayModeCallback)
-        return;
-        
-    registeredPlayModeCallback = true;
-    EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-}
 
-private static void OnPlayModeStateChanged(PlayModeStateChange state)
-{
-    if (state == PlayModeStateChange.EnteredEditMode)
-    {
-        // エディットモードに戻った時だけ処理
-        EditorApplication.delayCall += () => {
-            var windows = Resources.FindObjectsOfTypeAll<PuruBlinkCustomEditor>();
-            foreach (var window in windows)
+        [InitializeOnLoadMethod]
+        private static void RegisterPlayModeStateChanged()
+        {
+            if (registeredPlayModeCallback)
+                return;
+                
+            registeredPlayModeCallback = true;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.EnteredEditMode)
             {
-                try {
-                    window.Repaint();
-                }
-                catch (System.Exception) {
-                    // 例外を抑制
-                }
+                EditorApplication.delayCall += () => {
+                    var windows = Resources.FindObjectsOfTypeAll<PuruBlinkCustomEditor>();
+                    foreach (var window in windows)
+                    {
+                        try {
+                            window.Repaint();
+                        }
+                        catch (System.Exception) {
+                        }
+                    }
+                };
             }
-        };
-    }
-}
-
+        }
     }
 
     public class ParameterDriverState
