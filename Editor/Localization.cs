@@ -11,7 +11,7 @@ namespace PuruBlinkCustom
         private Dictionary<string, string> strings = new Dictionary<string, string>();
         private static readonly Dictionary<string, GUIContent> guicontents = new Dictionary<string, GUIContent>();
         
-        private static string localizationFolder = "Assets/21CSX/PuruBlinkCustomEditor/Localization";
+        private static string localizationFolder => AssetDatabase.GUIDToAssetPath("24cfdd866a1e19f4ea7824b28e8ad451");
         private static string settingsPath = "Library/PuruBlinkCustomEditor.lang";
         private static Language currentLanguage = Language.日本語; // デフォルトは日本語
 
