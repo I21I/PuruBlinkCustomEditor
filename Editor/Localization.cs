@@ -39,27 +39,26 @@ namespace PuruBlinkCustom
             Load();
         }
 
-        internal static void Load()
+internal static void Load()
+{
+    guicontents.Clear();
+    instance.strings.Clear();
+
+    if (currentLanguage != Language.日本語)
+    {
+        string langCode = GetLanguageCode(currentLanguage);
+        var path = localizationFolder + "/" + langCode + ".po"; // <-- "/"で直結
+
+        if (File.Exists(path))
         {
-            guicontents.Clear();
-            instance.strings.Clear();
-            
-            // 日本語はデフォルトなのでPOファイルをロードする必要はない
-            if (currentLanguage != Language.日本語)
-            {
-                string langCode = GetLanguageCode(currentLanguage);
-                var path = Path.Combine(localizationFolder, langCode + ".po");
-                
-                if (File.Exists(path))
-                {
-                    LoadPOFile(path);
-                }
-                else
-                {
-                    Debug.LogWarning($"Language file not found: {path}");
-                }
-            }
+            LoadPOFile(path);
         }
+        else
+        {
+            Debug.LogWarning($"Language file not found: {path}");
+        }
+    }
+}
 
         private static void LoadPOFile(string path)
         {
