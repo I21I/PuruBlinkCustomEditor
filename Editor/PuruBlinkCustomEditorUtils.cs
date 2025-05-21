@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace VRCFaceController
+namespace PuruBlinkCustom
 {
     public static class PuruBlinkCustomEditorUtils
     {
@@ -85,9 +85,9 @@ namespace VRCFaceController
                 }
                 catch (Exception ex)
                 {
-                    EditorUtility.DisplayDialog(PuruBlinkCustomEditorLocalization.L("Error"), 
-                        PuruBlinkCustomEditorLocalization.L("FolderCreationError", ex.Message), 
-                        PuruBlinkCustomEditorLocalization.L("OK"));
+                    EditorUtility.DisplayDialog(Localization.L("エラー"), 
+                        Localization.L("フォルダの作成中にエラーが発生しました: {0}", ex.Message), 
+                        "OK");
                 }
             }
         }
@@ -126,11 +126,10 @@ namespace VRCFaceController
                 }
             }
         }
-        // 最後のユーティリティメソッドの後に追加
-public static bool CheckPlayModeOperation()
-{
-    // エラーメッセージを出さずに静かに失敗
-    return !Application.isPlaying;
-}
+        
+        public static bool CheckPlayModeOperation()
+        {
+            return !Application.isPlaying;
+        }
     }
 }
