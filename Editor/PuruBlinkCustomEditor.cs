@@ -53,7 +53,6 @@ namespace VRCFaceController
         private bool outputSettingsFoldout = true;
         
         private List<GameObject> targetPrefabs = new List<GameObject>();
-        private bool prefabReplaceEnabled = true;
         private bool createPrefabVariant = true;
         
         private GUIStyle headerStyle;
@@ -1075,6 +1074,7 @@ namespace VRCFaceController
             }
             catch (System.Exception ex)
             {
+                Debug.LogWarning($"ModularAvatarコンポーネントの検索中にエラーが発生しました: {ex.Message}");
             }
             
             return null;
@@ -1252,9 +1252,12 @@ namespace VRCFaceController
         
         private void ReplaceAnimations()
         {
-            if (targetControllers.Count == 0 || animationReplacementMap.Count == 0)
+             if (targetControllers.Count == 0 || animationReplacementMap.Count == 0)
+            {
+                Debug.LogWarning("アニメーション置換: コントローラまたは置換対象のアニメーションが選択されていません。");
                 return;
-            
+            }
+
             string timestamp = DateTime.Now.ToString("yyMMddHHmmss");
             string dynamicOutputFolder = outputFolder + "/Export" + timestamp;
             
@@ -1374,8 +1377,9 @@ namespace VRCFaceController
                                         }
                                     }
                                 }
-                                catch (System.Exception)
+                                catch (System.Exception ex)
                                 {
+                                    Debug.LogWarning($"ModularAvatarコンポーネントの更新中にエラーが発生しました: {ex.Message}");
                                 }
                                 
                                 GameObject newPrefab;
@@ -1620,8 +1624,7 @@ namespace VRCFaceController
             
             List<string> sortedParameters = new List<string>();
             
-            var controlParams = availableParameters.Where(p => 
-                p.StartsWith("F_") || p.EndsWith("_set") || p.Contains("Set") || p.Contains("set")).ToList();
+            var controlParams = availableParameters.Where(p => p.Contains("F_Set")).ToList();
                 
             sortedParameters.AddRange(controlParams);
             
