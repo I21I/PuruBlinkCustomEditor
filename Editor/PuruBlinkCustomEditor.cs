@@ -57,8 +57,8 @@ namespace PuruBlinkCustom
         private Dictionary<AnimationClip, AnimationClip> animationReplacementMap = new Dictionary<AnimationClip, AnimationClip>();
         private Dictionary<string, Dictionary<string, List<AnimationClip>>> controllerLayerAnimationMap = new Dictionary<string, Dictionary<string, List<AnimationClip>>>();
         
-        private string outputFolder = "Assets/21CSX/PuruBlinkCustomEditor";
-        private string outputPrefix = "Exp_";
+        private string outputFolder = "Assets/21CSXtools/PuruBlinkCustomEditor/Export";
+        private string outputPrefix = "PBCE_";
         private bool copyController = true;
         
         private bool showEditButtons = false;
@@ -855,7 +855,7 @@ EditorGUILayout.EndHorizontal();
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(Localization.L("出力フォルダ:"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 120 : 100));
-                EditorGUILayout.LabelField(outputFolder + "/" + Localization.L("Export[日付]"));
+                EditorGUILayout.LabelField(outputFolder + "/" + Localization.L("[日付]"));
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.BeginHorizontal();
@@ -1314,7 +1314,7 @@ EditorGUILayout.EndHorizontal();
             }
 
             string timestamp = DateTime.Now.ToString("yyMMddHHmmss");
-            string dynamicOutputFolder = outputFolder + "/Export" + timestamp;
+            string dynamicOutputFolder = outputFolder + "/" + timestamp;
             
             PuruBlinkCustomEditorUtils.CreateOutputFolder(dynamicOutputFolder);
             
@@ -1549,68 +1549,120 @@ EditorGUILayout.EndHorizontal();
             return replacedCount;
         }
 
-        private void DrawControllerSelectionArea()
-        {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("AnimatorController", EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-            
-            if (targetControllers.Count > 0 && targetControllers.Any(c => c != null))
+private void DrawControllerSelectionArea()
+{
+    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+    
+    EditorGUILayout.BeginHorizontal();
+    EditorGUILayout.LabelField("AnimatorController", EditorStyles.boldLabel, GUILayout.Width(120));
+
+    AnimatorController newController = (AnimatorController)EditorGUILayout.ObjectField(
+    null, typeof(AnimatorController), false, GUILayout.Width(180));
+    if (newController != null && !targetControllers.Contains(newController))
+    {
+        targetControllers.Add(newController);
+        AnalyzeController();
+    }
+    
+    GUILayout.FlexibleSpace();
+    
+    if (targetControllers.Count > 0 && targetControllers.Any(c => c != null))
             {
                 if (GUILayout.Button(Localization.L("更新"), GUILayout.Width(60)))
                 {
                     AnalyzeController();
                 }
             }
-            EditorGUILayout.EndHorizontal();
-            
-            if (targetControllers.Count > 0)
+    EditorGUILayout.EndHorizontal();
+    
+    if (targetControllers.Count > 0)
+    {
+        int controllerCount = targetControllers.Count;
+        
+        // 4個以下の場合はScrollViewを使わない
+        if (controllerCount <= 4)
+        {
+            for (int i = 0; i < targetControllers.Count; i++)
             {
-                int controllerCount = Mathf.Max(1, targetControllers.Count);
-                float dynamicHeight = Mathf.Clamp(controllerCount * 22 + 10, 40, 120);
+                EditorGUILayout.BeginHorizontal();
                 
-                controllersScrollPosition = EditorGUILayout.BeginScrollView(controllersScrollPosition, GUILayout.Height(dynamicHeight));
+                EditorGUI.BeginChangeCheck();
+                targetControllers[i] = (AnimatorController)EditorGUILayout.ObjectField(
+                    targetControllers[i], typeof(AnimatorController), false, GUILayout.ExpandWidth(true));
                 
-                for (int i = 0; i < targetControllers.Count; i++)
+                if (EditorGUI.EndChangeCheck())
                 {
-                    EditorGUILayout.BeginHorizontal();
-                    
-                    EditorGUI.BeginChangeCheck();
-                    targetControllers[i] = (AnimatorController)EditorGUILayout.ObjectField(
-                        targetControllers[i], typeof(AnimatorController), false, GUILayout.ExpandWidth(true));
-                    
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        AnalyzeController();
-                    }
-                    
-                    if (GUILayout.Button(Localization.L("削除"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 60 : 60)))
-                    {
-                        targetControllers.RemoveAt(i);
-                        if (selectedControllerIndex >= targetControllers.Count)
-                        {
-                            selectedControllerIndex = Mathf.Max(0, targetControllers.Count - 1);
-                        }
-                        AnalyzeController();
-                    }
-                    
-                    EditorGUILayout.EndHorizontal();
+                    AnalyzeController();
                 }
                 
-                EditorGUILayout.EndScrollView();
+                if (GUILayout.Button(Localization.L("削除"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 60 : 60)))
+                {
+                    targetControllers.RemoveAt(i);
+                    if (selectedControllerIndex >= targetControllers.Count)
+                    {
+                        selectedControllerIndex = Mathf.Max(0, targetControllers.Count - 1);
+                    }
+                    AnalyzeController();
+                    GUIUtility.ExitGUI();
+                    return;
+                }
+                
+                EditorGUILayout.EndHorizontal();
             }
-
-            Rect dropArea = GUILayoutUtility.GetRect(0.0f, 35.0f, GUILayout.ExpandWidth(true));
-            dropArea.x += 5;
-            dropArea.width -= 10;
-            GUI.Box(dropArea, "", dropAreaStyle);
-            EditorGUI.LabelField(dropArea, Localization.L("AnimatorControllerをここにドラッグ＆ドロップ"), dropAreaTextStyle);
-            HandleDragAndDrop(dropArea);
-            
-            EditorGUILayout.EndVertical();
         }
+        else
+        {
+            // 5個以上の場合のみScrollViewを使用
+            // 4行分の高さ + 5個目がほんの少しだけ見える程度の高さ
+            float maxHeight = 4 * 22 + 8; // 4行分 + 余白 + 5行目のほんの少し
+            
+            controllersScrollPosition = EditorGUILayout.BeginScrollView(controllersScrollPosition, GUILayout.Height(maxHeight));
+            
+            for (int i = 0; i < targetControllers.Count; i++)
+            {
+                EditorGUILayout.BeginHorizontal();
+                
+                EditorGUI.BeginChangeCheck();
+                targetControllers[i] = (AnimatorController)EditorGUILayout.ObjectField(
+                    targetControllers[i], typeof(AnimatorController), false, GUILayout.ExpandWidth(true));
+                
+                if (EditorGUI.EndChangeCheck())
+                {
+                    AnalyzeController();
+                }
+                
+                if (GUILayout.Button(Localization.L("削除"), GUILayout.Width(Localization.CurrentLanguage == Localization.Language.English ? 60 : 60)))
+                {
+                    targetControllers.RemoveAt(i);
+                    if (selectedControllerIndex >= targetControllers.Count)
+                    {
+                        selectedControllerIndex = Mathf.Max(0, targetControllers.Count - 1);
+                    }
+                    AnalyzeController();
+                    GUIUtility.ExitGUI();
+                    return;
+                }
+                
+                EditorGUILayout.EndHorizontal();
+            }
+            
+            EditorGUILayout.EndScrollView();
+        }
+        
+        // ドロップエリアとの間にスペースを追加
+        EditorGUILayout.Space(5);
+    }
+
+    Rect dropArea = GUILayoutUtility.GetRect(0.0f, 35.0f, GUILayout.ExpandWidth(true));
+    dropArea.x += 5;
+    dropArea.width -= 10;
+    GUI.Box(dropArea, "", dropAreaStyle);
+    EditorGUI.LabelField(dropArea, Localization.L("AnimatorControllerをここにドラッグ＆ドロップ"), dropAreaTextStyle);
+    HandleDragAndDrop(dropArea);
+    EditorGUILayout.Space(2);
+    
+    EditorGUILayout.EndVertical();
+}
 
         private void HandleDragAndDrop(Rect dropArea)
         {
