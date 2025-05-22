@@ -101,8 +101,8 @@ msgstr "Search Animations"
 msgid "アニメーションを置換"
 msgstr "Replace Animations"
 
-msgid "Export[日付]"
-msgstr "Export[Date]"
+msgid "[日付]"
+msgstr "[Date]"
 
 msgid "AnimatorControllerをここにドラッグ＆ドロップ"
 msgstr "Drag & Drop AnimatorController Here"
